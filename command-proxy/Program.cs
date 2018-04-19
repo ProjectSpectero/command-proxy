@@ -7,8 +7,9 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using NLog.Web;
 
-namespace command_proxy
+namespace Spectero.Cproxy
 {
     public class Program
     {
@@ -17,9 +18,17 @@ namespace command_proxy
             BuildWebHost(args).Run();
         }
 
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
+        private static IWebHost BuildWebHost(string[] args)
+        {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+            return WebHost
+                .CreateDefaultBuilder(args)
+                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseConfiguration(Startup.BuildConfiguration(environment))
                 .UseStartup<Startup>()
+                .UseNLog()
                 .Build();
+        }
     }
 }
