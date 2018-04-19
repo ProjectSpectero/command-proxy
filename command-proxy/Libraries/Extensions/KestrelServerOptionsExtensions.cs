@@ -49,7 +49,6 @@ namespace Spectero.Cproxy.Libraries.Extensions
                 }
 
                 foreach (var address in ipAddresses)
-                {
                     options.Listen(address, port,
                         listenOptions =>
                         {
@@ -59,35 +58,28 @@ namespace Spectero.Cproxy.Libraries.Extensions
                                 listenOptions.UseHttps(certificate);
                             }
                         });
-                }
             }
         }
 
         private static X509Certificate2 LoadCertificate(EndpointConfiguration config, IHostingEnvironment environment)
         {
             if (config.StoreName != null && config.StoreLocation != null)
-            {
                 using (var store = new X509Store(config.StoreName, Enum.Parse<StoreLocation>(config.StoreLocation)))
                 {
                     store.Open(OpenFlags.ReadOnly);
                     var certificate = store.Certificates.Find(
                         X509FindType.FindBySubjectName,
                         config.Host,
-                        validOnly: !environment.IsDevelopment());
+                        !environment.IsDevelopment());
 
                     if (certificate.Count == 0)
-                    {
                         throw new InvalidOperationException($"Certificate not found for {config.Host}.");
-                    }
 
                     return certificate[0];
                 }
-            }
 
             if (config.FilePath != null && config.Password != null)
-            {
                 return new X509Certificate2(config.FilePath, config.Password);
-            }
 
             throw new InvalidOperationException("No valid certificate configuration found for the current endpoint.");
         }

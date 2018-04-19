@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -22,12 +18,13 @@ namespace Spectero.Cproxy
     public class Startup
     {
         private static readonly string CurrentDirectory = Directory.GetCurrentDirectory();
-        private IConfiguration Configuration { get; }
 
         public Startup(IHostingEnvironment env)
         {
             Configuration = BuildConfiguration(env.EnvironmentName);
         }
+
+        private IConfiguration Configuration { get; }
 
         // Dirty hack? Absolutely.
         // Avoids this bullshit though: https://github.com/aspnet/Hosting/issues/766
@@ -86,10 +83,7 @@ namespace Spectero.Cproxy
         {
             var appConfig = configMonitor.CurrentValue;
 
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+            if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
 
             // Redirect into the HTTPs port if a request is received over HTTP
             int? httpsPort = null;
@@ -100,20 +94,20 @@ namespace Spectero.Cproxy
                 httpsSection.Bind(httpsEndpoint);
                 httpsPort = httpsEndpoint.Port;
             }
+
             var statusCode = env.IsDevelopment() ? StatusCodes.Status302Found : StatusCodes.Status301MovedPermanently;
             app.UseRewriter(new RewriteOptions().AddRedirectToHttps(statusCode, httpsPort));
 
             app.UseMvc(routes =>
             {
                 routes.MapSpaFallbackRoute(
-                    name: "GlobalHandler",
-                    defaults: new { controller = "CommandProxy", action = "Handle" } // Horrible hack, but hey, it works!
+                    "GlobalHandler",
+                    new {controller = "CommandProxy", action = "Handle"} // Horrible hack, but hey, it works!
                 );
             });
 
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
-
         }
     }
 }
