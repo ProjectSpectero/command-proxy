@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NLog.Web;
+using Spectero.Cproxy.Libraries.Extensions;
 
 namespace Spectero.Cproxy
 {
@@ -28,6 +29,12 @@ namespace Spectero.Cproxy
                 .UseConfiguration(Startup.BuildConfiguration(environment))
                 .UseStartup<Startup>()
                 .UseNLog()
+                /*
+                 * Be sure to set the PFX secret (for SSL/TLS) using one of the following:
+                 *  1. dotnet user-secrets set HttpServer:Endpoints:Https:Password
+                 *  2. Set env var -> HttpServer:Endpoints:Https:Password or HttpServer__Endpoints__Https__Password
+                 */
+                .UseKestrel(options => options.ConfigureEndpoints())
                 .Build();
         }
     }

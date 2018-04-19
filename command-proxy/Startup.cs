@@ -8,12 +8,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NLog.Extensions.Logging;
+using Spectero.Cproxy.Models;
 
 namespace Spectero.Cproxy
 {
@@ -35,7 +37,6 @@ namespace Spectero.Cproxy
                 .SetBasePath(CurrentDirectory)
                 .AddJsonFile("appsettings.json", false, true)
                 .AddJsonFile($"appsettings.{envName}.json", true)
-                .AddJsonFile("hosting.json", optional: true)
                 .AddEnvironmentVariables();
 
             return builder.Build();
@@ -89,6 +90,18 @@ namespace Spectero.Cproxy
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            // Redirect into the HTTPs port if a request is received over HTTP
+            int? httpsPort = null;
+            var httpsSection = Configuration.GetSection("HttpServer:Endpoints:Https");
+            if (httpsSection.Exists())
+            {
+                var httpsEndpoint = new EndpointConfiguration();
+                httpsSection.Bind(httpsEndpoint);
+                httpsPort = httpsEndpoint.Port;
+            }
+            var statusCode = env.IsDevelopment() ? StatusCodes.Status302Found : StatusCodes.Status301MovedPermanently;
+            app.UseRewriter(new RewriteOptions().AddRedirectToHttps(statusCode, httpsPort));
 
             app.UseMvc(routes =>
             {
