@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Net.Http;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -72,8 +73,14 @@ namespace Spectero.Cproxy
                         .AllowCredentials());
             });
 
-            services.AddDistributedMemoryCache();
+            var redisConfig = Configuration.GetSection("Redis");
+            services.AddDistributedRedisCache(options =>
+            {
+                options.Configuration = redisConfig["Host"];
+                options.InstanceName = redisConfig["InstanceName"];
+            });
 
+            services.AddSingleton<HttpClient, HttpClient>();
             services.AddMvc();
         }
 
