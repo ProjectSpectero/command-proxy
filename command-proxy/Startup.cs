@@ -85,18 +85,22 @@ namespace Spectero.Cproxy
 
             if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
 
-            // Redirect into the HTTPs port if a request is received over HTTP
-            int? httpsPort = null;
-            var httpsSection = Configuration.GetSection("HttpServer:Endpoints:Https");
-            if (httpsSection.Exists())
+            if (appConfig.RedirectHttpToHttps)
             {
-                var httpsEndpoint = new EndpointConfiguration();
-                httpsSection.Bind(httpsEndpoint);
-                httpsPort = httpsEndpoint.Port;
+                // Redirect into the HTTPs port if a request is received over HTTP
+                int? httpsPort = null;
+                var httpsSection = Configuration.GetSection("HttpServer:Endpoints:Https");
+                if (httpsSection.Exists())
+                {
+                    var httpsEndpoint = new EndpointConfiguration();
+                    httpsSection.Bind(httpsEndpoint);
+                    httpsPort = httpsEndpoint.Port;
+                }
+
+                var statusCode = env.IsDevelopment() ? StatusCodes.Status302Found : StatusCodes.Status301MovedPermanently;
+                app.UseRewriter(new RewriteOptions().AddRedirectToHttps(statusCode, httpsPort));
             }
 
-            var statusCode = env.IsDevelopment() ? StatusCodes.Status302Found : StatusCodes.Status301MovedPermanently;
-            app.UseRewriter(new RewriteOptions().AddRedirectToHttps(statusCode, httpsPort));
 
             app.UseMvc(routes =>
             {

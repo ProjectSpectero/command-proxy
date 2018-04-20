@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,11 +13,14 @@ namespace Spectero.Cproxy.Controllers
     {
         protected readonly AppConfig AppConfig;
         protected readonly ILogger<BaseController> Logger;
+        protected readonly HttpContext Context;
 
-        public BaseController(IOptionsMonitor<AppConfig> appConfig, ILogger<BaseController> logger)
+        public BaseController(IOptionsMonitor<AppConfig> appConfig, ILogger<BaseController> logger,
+            IHttpContextAccessor ctxAccessor)
         {
             AppConfig = appConfig.CurrentValue;
             Logger = logger;
+            Context = ctxAccessor.HttpContext;
         }
 
         private IEnumerable<Claim> GetClaims()
