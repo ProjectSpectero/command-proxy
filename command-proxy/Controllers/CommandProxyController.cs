@@ -37,7 +37,7 @@ namespace Spectero.Cproxy.Controllers
             var method = new HttpMethod(_request.Method);
 
             // Combination of the path and any querystrings given
-            var fullRequestedPath = targetNode.GetAccessor() + _request.Path + _request.QueryString.Value;
+            var fullRequestedPath = "http://8.8.8.8:443" + _request.Path + _request.QueryString.Value;
 
             // Request body, if one was given
             var body = await StreamUtils.ReadStream(_request.Body);

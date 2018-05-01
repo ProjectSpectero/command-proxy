@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NLog.Extensions.Logging;
+using Spectero.Cproxy.Libraries.Utils;
 using Spectero.Cproxy.Models;
 
 namespace Spectero.Cproxy
@@ -81,7 +82,7 @@ namespace Spectero.Cproxy
             });
 
             services.AddSingleton<HttpClient, HttpClient>();
-            services.AddMvc();
+            services.AddMvc(options => { options.Filters.Add<RootExceptionHandler>(); });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -89,8 +90,6 @@ namespace Spectero.Cproxy
             ILoggerFactory loggerFactory, IOptionsMonitor<AppConfig> configMonitor)
         {
             var appConfig = configMonitor.CurrentValue;
-
-            if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
 
             if (appConfig.RedirectHttpToHttps)
             {
@@ -115,6 +114,7 @@ namespace Spectero.Cproxy
                     "GlobalHandler",
                     new {controller = "CommandProxy", action = "Handle"} // Horrible hack, but hey, it works!
                 );
+
             });
 
             loggerFactory.AddNLog();
