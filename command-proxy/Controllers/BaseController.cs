@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Spectero.Cproxy.Models;
 
 namespace Spectero.Cproxy.Controllers
@@ -16,27 +17,29 @@ namespace Spectero.Cproxy.Controllers
         protected readonly HttpContext Context;
 
         public BaseController(IOptionsMonitor<AppConfig> appConfig, ILogger<BaseController> logger,
-            IHttpContextAccessor ctxAccessor)
+            IHttpContextAccessor httpContext)
         {
             AppConfig = appConfig.CurrentValue;
             Logger = logger;
-            Context = ctxAccessor.HttpContext;
+            Context = httpContext.HttpContext;
         }
 
-        private IEnumerable<Claim> GetClaims()
+        protected IEnumerable<Claim> GetClaims()
         {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var identity = Context.User.Identity as ClaimsIdentity;
             return identity?.Claims;
         }
 
-        private Claim GetClaim(string type)
+        protected Claim GetClaim(string type)
         {
             return GetClaims().FirstOrDefault(x => x.Type == type);
         }
 
-        private Payload GetDecryptedPayload(string payload)
+        protected Node GetPayload()
         {
-            return null; // TODO: Implement this
+            var proxyPayload = GetClaim(Libraries.Constants.Claim.ProxyPayload); // This is a JSON payload containing the node object
+
+            return JsonConvert.DeserializeObject<Node>(proxyPayload.Value);
         }
     }
 }

@@ -7,6 +7,11 @@
         public string ip { get; set; }
         public int port { get; set; }
         public Credential credentials { get; set; }
+
+        public string GetAccessor()
+        {
+            return $"{protocol}://{ip}:{port}";
+        }
     }
 
     public enum Protocol

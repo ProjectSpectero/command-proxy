@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -10,11 +9,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack;
 using Spectero.Cproxy.Libraries.Utils;
-using Spectero.Cproxy.Models;
 
 namespace Spectero.Cproxy.Controllers
 {
-    //[Authorize(AuthenticationSchemes = "Bearer")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class CommandProxyController : BaseController
     {
         private readonly HttpRequest _request;
@@ -33,11 +31,13 @@ namespace Spectero.Cproxy.Controllers
 
         public async Task<IActionResult> Handle()
         {
+            var targetNode = GetPayload();
+
             // Method to proxy to the daemon over
             var method = new HttpMethod(_request.Method);
 
             // Combination of the path and any querystrings given
-            var fullRequestedPath = _request.Path + _request.QueryString.Value;
+            var fullRequestedPath = targetNode.GetAccessor() + _request.Path + _request.QueryString.Value;
 
             // Request body, if one was given
             var body = await StreamUtils.ReadStream(_request.Body);
@@ -49,11 +49,23 @@ namespace Spectero.Cproxy.Controllers
                 daemonRequest.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
             // Daemon actions typically require authorization, dress it with the token
-            daemonRequest.Headers.Add("Authorization", "Bearer w0w!");
+            daemonRequest.Headers.Add("Authorization", "Bearer " + targetNode.credentials?.access?.token);
 
             var response = await _client.SendAsync(daemonRequest);
+            var responseBody = await response.Content.ReadAsStringAsync();
 
-            return Ok(response);
+            foreach (var upstreamHeader in response.Headers)
+            {
+                var key = upstreamHeader.Key;
+                var values = upstreamHeader.Value;
+
+                foreach (var value in values)
+                {
+                    Context.Response.Headers.Add("E-" + key, value);
+                }
+            }
+            
+            return StatusCode((int) response.StatusCode, responseBody);
         }
 
     }
