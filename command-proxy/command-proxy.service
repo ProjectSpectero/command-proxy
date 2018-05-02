@@ -1,0 +1,25 @@
+﻿[Unit]
+Description=Spectero Command Proxy
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/spectero/command-proxy/latest
+EnvironmentFile=/opt/spectero/command-proxy/latest/env
+ExecStart=/usr/bin/dotnet Spectero.Cproxy.dll
+TimeoutSec=infinity
+Restart=on-failure
+RestartSec=60
+User=command-proxy
+Group=command-proxy
+
+# These options are (typically) not required for a normal daemon instance.
+# [Unit]
+# StartLimitAction=reboot
+# StartLimitIntervalSec=300
+# StartLimitBurst=5
+# Requires=haproxy.service
+
+
+[Install]
+WantedBy=multi-user.target
+Alias=command-proxy.service
