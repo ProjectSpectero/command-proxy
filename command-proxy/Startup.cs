@@ -92,6 +92,7 @@ namespace Spectero.Cproxy
         {
             var appConfig = configMonitor.CurrentValue;
 
+            app.UseCors("DefaultCORSPolicy");
             app.UsePreflightAuthorizer();
 
             if (appConfig.RedirectHttpToHttps)
