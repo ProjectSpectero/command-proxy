@@ -64,6 +64,8 @@ namespace Spectero.Cproxy.Controllers
                     Context.Response.Headers.Add("E-" + key, value);
                 }
             }
+
+            //Context.Response.Headers.Add("Content-Type", "application/json");
             
             return StatusCode((int) response.StatusCode, responseBody);
         }

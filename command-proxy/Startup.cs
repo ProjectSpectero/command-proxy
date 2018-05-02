@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NLog.Extensions.Logging;
+using Spectero.Cproxy.Libraries.Extensions;
 using Spectero.Cproxy.Libraries.Utils;
 using Spectero.Cproxy.Models;
 
@@ -90,6 +91,8 @@ namespace Spectero.Cproxy
             ILoggerFactory loggerFactory, IOptionsMonitor<AppConfig> configMonitor)
         {
             var appConfig = configMonitor.CurrentValue;
+
+            app.UsePreflightAuthorizer();
 
             if (appConfig.RedirectHttpToHttps)
             {
