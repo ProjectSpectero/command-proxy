@@ -74,6 +74,8 @@ namespace Spectero.Cproxy.Controllers
             }
             
             _response.Headers.Add("E-Response-Size", byteCount.ToString());
+            _response.Headers.Add("E-Uri-Requested", fullRequestedPath);
+            _response.Headers.Add("E-Request-Method", _request.Method);
 
             // Setting this unfortunately leads to the string being double escaped, see https://puu.sh/APSGg/9e0e8b140c.png
             //_response.ContentType = "application/json";
