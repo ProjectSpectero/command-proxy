@@ -16,6 +16,7 @@ namespace Spectero.Cproxy.Controllers
     public class CommandProxyController : BaseController
     {
         private readonly HttpRequest _request;
+        private readonly HttpResponse _response;
         private readonly IDistributedCache _cache;
         private readonly HttpClient _client;
 
@@ -27,6 +28,7 @@ namespace Spectero.Cproxy.Controllers
             _cache = distributedCache;
             _client = httpClient;
             _request = Context.Request;
+            _response = Context.Response;
         }
 
         public async Task<IActionResult> Handle()
@@ -61,11 +63,19 @@ namespace Spectero.Cproxy.Controllers
 
                 foreach (var value in values)
                 {
-                    Context.Response.Headers.Add("E-" + key, value);
+                    _response.Headers.Add("E-" + key, value);
                 }
             }
 
-            //Context.Response.Headers.Add("Content-Type", "application/json");
+            var byteCount = 0;
+            if (! responseBody.IsNullOrEmpty())
+            {
+                byteCount = Encoding.Unicode.GetByteCount(responseBody);
+            }
+            
+            _response.Headers.Add("E-Response-Size", byteCount.ToString());
+
+            _response.ContentType = "application/json";
             
             return StatusCode((int) response.StatusCode, responseBody);
         }
