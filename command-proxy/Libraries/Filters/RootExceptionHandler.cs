@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 
@@ -12,10 +14,13 @@ namespace Spectero.Cproxy.Libraries.Utils
         {
             _logger = logger;
         }
+        
         public void OnException(ExceptionContext context)
         {
-            _logger.LogError(0, context.Exception, "Unhandled exception occured.");
-
+            // This gets thrown on a generic timeout error. Logging it is pointless.
+            if (! (context.Exception is TaskCanceledException) && ! (context.Exception is OperationCanceledException))
+                _logger.LogError(0, context.Exception, "Unhandled exception occured.");
+            
             var response = context.HttpContext.Response;
             response.StatusCode = (int) HttpStatusCode.ServiceUnavailable;
 

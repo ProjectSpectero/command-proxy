@@ -6,5 +6,6 @@
         public string JWTSigningKey { get; set; }
         public string LoggingConfig { get; set; }
         public bool RedirectHttpToHttps { get; set; }
+        public int RequestTimeoutInSeconds { get; set; }
     }
 }

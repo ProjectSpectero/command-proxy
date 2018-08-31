@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -54,6 +55,7 @@ namespace Spectero.Cproxy.Controllers
             daemonRequest.Headers.Add("Authorization", "Bearer " + targetNode.credentials?.access?.token);
 
             var response = await _client.SendAsync(daemonRequest);
+            
             var responseBody = await response.Content.ReadAsStringAsync();
 
             foreach (var upstreamHeader in response.Headers)

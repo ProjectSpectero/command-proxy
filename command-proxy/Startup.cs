@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -82,7 +83,15 @@ namespace Spectero.Cproxy
                 options.InstanceName = redisConfig["InstanceName"];
             });
 
-            services.AddSingleton<HttpClient, HttpClient>();
+            services.AddSingleton(c =>
+            {
+                var timeoutValue = double.Parse(appConfig["RequestTimeoutInSeconds"]);
+
+                var client = new HttpClient {Timeout = TimeSpan.FromSeconds(timeoutValue)};
+
+                return client;
+            });
+            
             services.AddMvc(options => { options.Filters.Add<RootExceptionHandler>(); });
         }
 
