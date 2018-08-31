@@ -16,8 +16,6 @@ namespace Spectero.Cproxy.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class CommandProxyController : BaseController
     {
-        private readonly HttpRequest _request;
-        private readonly HttpResponse _response;
         private readonly IDistributedCache _cache;
         private readonly HttpClient _client;
 
@@ -28,22 +26,23 @@ namespace Spectero.Cproxy.Controllers
         {
             _cache = distributedCache;
             _client = httpClient;
-            _request = Context.Request;
-            _response = Context.Response;
         }
 
         public async Task<IActionResult> Handle()
         {
+            var request = Context.Request;
+            var response = Context.Response;
+            
             var targetNode = GetPayload();
 
             // Method to proxy to the daemon over
-            var method = new HttpMethod(_request.Method);
+            var method = new HttpMethod(request.Method);
 
             // Combination of the path and any querystrings given
-            var fullRequestedPath = targetNode.GetAccessor() + _request.Path + _request.QueryString.Value;
+            var fullRequestedPath = targetNode.GetAccessor() + request.Path + request.QueryString.Value;
 
             // Request body, if one was given
-            var body = await StreamUtils.ReadStream(_request.Body);
+            var body = await StreamUtils.ReadStream(request.Body);
 
             // Create a new request object, and dress it up
             var daemonRequest = new HttpRequestMessage(method, fullRequestedPath);
@@ -54,18 +53,18 @@ namespace Spectero.Cproxy.Controllers
             // Daemon actions typically require authorization, dress it with the token
             daemonRequest.Headers.Add("Authorization", "Bearer " + targetNode.credentials?.access?.token);
 
-            var response = await _client.SendAsync(daemonRequest);
+            var responseMessage = await _client.SendAsync(daemonRequest);
             
-            var responseBody = await response.Content.ReadAsStringAsync();
+            var responseBody = await responseMessage.Content.ReadAsStringAsync();
 
-            foreach (var upstreamHeader in response.Headers)
+            foreach (var upstreamHeader in responseMessage.Headers)
             {
                 var key = upstreamHeader.Key;
                 var values = upstreamHeader.Value;
 
                 foreach (var value in values)
                 {
-                    _response.Headers.Add("E-" + key, value);
+                    response.Headers.Add("E-" + key, value);
                 }
             }
 
@@ -75,14 +74,14 @@ namespace Spectero.Cproxy.Controllers
                 byteCount = Encoding.Unicode.GetByteCount(responseBody);
             }
             
-            _response.Headers.Add("E-Response-Size", byteCount.ToString());
-            _response.Headers.Add("E-Uri-Requested", fullRequestedPath);
-            _response.Headers.Add("E-Request-Method", _request.Method);
+            response.Headers.Add("E-Response-Size", byteCount.ToString());
+            response.Headers.Add("E-Uri-Requested", fullRequestedPath);
+            response.Headers.Add("E-Request-Method", request.Method);
 
             // Setting this unfortunately leads to the string being double escaped, see https://puu.sh/APSGg/9e0e8b140c.png
-            //_response.ContentType = "application/json";
+            //response.ContentType = "application/json";
             
-            return StatusCode((int) response.StatusCode, responseBody);
+            return StatusCode((int) responseMessage.StatusCode, responseBody);
         }
 
     }
